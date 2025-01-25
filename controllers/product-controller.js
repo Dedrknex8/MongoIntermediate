@@ -17,6 +17,13 @@ const insertProduct = async(req,res)=>{
         instock : true,
         tags : ["Mobile","Android"]
         },
+        {
+        Product : "Console",
+        category : "Gaming",
+        price : 399,
+        instock : false,
+        tags : ["ps5","gaming"]
+        },
         ];
 
         const result = await Product.insertMany(sampleProducts);
@@ -36,28 +43,93 @@ const insertProduct = async(req,res)=>{
 
 const getAllProduct = async(req,res)=>{
     try{
-    const getPrduts = await Product.find({});
-    if(getPrduts?.length > 0){
-        res.status(200).json(
-            {
-                sucess : true,
-                message : "products found",
-                data : getPrduts
-            }
-        )
-    }else{
-        res.status(404).json(
-            {
-                sucess : false,
-                message : "products are not available"
-            }
-        )
-    }   
+    const result = await Product.aggregate([
+        {
+            $match : { //macthes the product with instock true
+                instock : true,
+                price : {
+                    $gte : 100, //price greate than
+                }
+            },
+        },
+        {
+            $group : {
+                _id : "Electornics",
+                avgPrice : {
+                    $avg : "$price",
+                },
+                count : {
+                    $sum : 1,
+                }
+                }
+        },
+        
+    ]);
+
+    res.status(200).json({
+        success : true,
+        message : "Product found",
+        data : result
+    });
     }catch(e){
         console.log(e);
         
     }
 }
 
+const productAnalysis = async(req,res) =>{
+    try {
+        const result = await Product.aggregate([
+        {
+            $match: {
+                'category': 'Electornics' // Use the correct path to match nested fields
+            },
+        },
+        {
+        $group : { //group some constrains to filter result
+            _id  :null,
+                totalRevenue : {
+                $sum : "$price",
 
-module.exports  =  { insertProduct,getAllProduct };
+                },
+                avgPrice : {
+                    $avg : "$price"
+                },
+                maxPrice : {
+                    $max : "$price",
+                },
+                minPrice: {
+                    $min : "$price"
+                }
+                
+            
+        }
+        },
+        {
+        $project : { // projection is used for `=> include or exclude 0 => exclude
+            _id : 0,
+            totalRevenue : 1,
+            maxPrice : 1,
+            minPrice : 1,
+            avgPrice : 1,
+            priceRange : {
+                $subtract : ["$maxPrice","$minPrice"],
+            }
+        }
+        }
+    ]);
+        console.log(result);
+        res.status(200).json({
+            message : `Product found ${result.length}`,
+            data : result,
+        })
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message : "something went wrong in product analysis"
+        })
+    }
+}
+
+
+module.exports  =  { insertProduct,getAllProduct,productAnalysis };

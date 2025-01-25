@@ -5,9 +5,13 @@ const ProductSchema = new mongoose.Schema({
             type:String,
             require : true,
         },
-        catgories : {
+        category : {
             type:String,
             require : true,
+        },
+        price : {
+            type : Number,
+            required : true,
         },
         instock: {
             type:Boolean,

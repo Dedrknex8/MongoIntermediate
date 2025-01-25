@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const connectToDb = require('./Database/db');
 const productRoutes = require('./routers/product-route');
+const bookRoutes = require('./routers/bookroute');
 const app = express();
 
 
@@ -18,3 +19,4 @@ app.listen(process.env.PORT,()=>{
     
 });
 app.use("/api",productRoutes);
+app.use("/api",bookRoutes);
